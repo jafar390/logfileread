@@ -1,0 +1,171 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>welcome</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+		<style type="text/css">
+			div.fixed {
+			    position: fixed;
+			    bottom: 5%;
+			    right: 0;
+			}
+			div.fixed_top {
+			    position: fixed;
+			    top: 0;
+			    right: 0;
+			}
+			
+		</style>
+	</head>
+<body onload="myFunction()">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-1 col-sm-0 col-md-0 col-xl-1">
+			</div>
+			<div class="col-lg-10 col-md-11 col-sm-11 col-xl-10">
+				<form>
+					{% csrf_token %}
+
+				</form>
+				<br/><br/>
+				<bdi id="mydiv">
+
+				</bdi>
+			</div>
+			<div class="col-lg-1 col-md-1 col-sm-1 col-xl-1 fixed_top">
+				<br/>
+				<div id="up">
+					<i class="fa fa-sort-asc" aria-hidden="true" onclick="upArrow()" style="cursor: pointer; font-size:65px;"></i><i class="fa fa-sort-desc" aria-hidden="true" style="opacity: 0.5;filter: alpha(opacity=50); color:#3A3C3A; font-size:65px;"></i>
+				</div>
+			</div>
+			<div class="col-lg-1 col-md-1 col-sm-1 col-xl-1 fixed">
+				<div id="down">
+				    <i class="fa fa-sort-asc" aria-hidden="true" style="opacity: 0.5;filter: alpha(opacity=50); color:#3A3C3A;  font-size:65px; "></i><i class="fa fa-sort-desc" aria-hidden="true" onclick="downArrow('no')" style="cursor: pointer;  font-size:65px;"></i>
+				</div> 
+			</div>
+		</div>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	
+	<script>
+		var up=document.getElementById("up");
+		up.style.display="none";
+		var down=document.getElementById("down");
+		down.style.display="none";
+		var len;
+		var prev=0;
+		var dict = {};
+		dict['0']=0;
+		var render=0;
+		var anova='';
+
+		$(window).scroll(function() {
+			var scrolledDown = window.scrollY;
+	     	if(scrolledDown === 0 && len > 10000){
+	     		up.style.display="block";
+	     	}
+	   		else if($(window).scrollTop() + $(window).height() == $(document).height()) {
+	    	   	down.style.display="block";
+	    	}
+			else{
+				up.style.display="none";
+				down.style.display="none";
+			}
+
+		});
+		function upArrow(){
+			render--;
+			if(render < 1)
+			{
+				render =0;
+				up.style.display="none";
+			}
+			len=dict[render];
+     	   	downArrow('yes');
+		}
+
+		function downArrow(flag){
+			if(flag === 'no'){
+				render++;
+			}
+			var data = new FormData();
+			data.append('position', len);
+	        data.append('csrfmiddlewaretoken',$('input[name=csrfmiddlewaretoken]').val())
+			$.ajax({
+	         	 type : 'POST',
+	          	 url:'/user/data/',
+	          	 data:data,
+	             dataType:"json",
+	             processData: false,
+	             contentType: false,
+	             success:function(res){
+		           	dict[render]=len;
+		            len=res.index1;
+		            document.getElementById("mydiv").innerHTML="";
+		            anova='';
+		            for(i=1;i<6;i++){
+		            	var stream1=res.result[i].split('\"stream\"');
+             	var afterstream1='<span style="color:#050607;">'+stream1[0]+'</span>"stream"'+stream1[1];
+             	var reason1=afterstream1.split('reason');
+             	console.log(reason1[0]);
+             	console.log(reason1[1]);
+             	var afterreason1='<span style="color:#6A0E0E";>'+reason1[0]+'</span> reason'+reason1[1];
+             	var str1=afterreason1.split('\"kubernetes\"');
+str1=str1[0]+'<span style="color:blue;font-weight: bold;">"kubernetes"</span>'+'<span style="color: #6A0E0E;">'+str1[1]+'</span>';
+              anova =anova + str1 + " <br/> <br/>";
+            		}
+            		 var anova = anova.replace(/reason:/g,'<span style="color:blue; font-weight:bold;">reason:</span>');
+     				document.getElementById("mydiv").innerHTML=anova;
+		             window.scrollTo(0, 0);
+	   				 down.style.display="none";
+				}
+			});
+		}
+
+		function myFunction() {
+			var data = new FormData();
+	        data.append('csrfmiddlewaretoken',$('input[name=csrfmiddlewaretoken]').val())
+			$.ajax({
+         	 type : 'POST',
+          	 url:'/user/create/',
+          	 data:data,
+             dataType:"json",
+             processData: false,
+             contentType: false,
+             success:function(res){           
+             len=res.index1;
+             anova='';
+             for(i=1;i<6;i++){
+             	var stream1=res.result[i].split('\"stream\"');
+             	var afterstream1='<span style="color:#050607;">'+stream1[0]+'</span>"stream"'+stream1[1];
+             	var reason1=afterstream1.split('reason');
+             	console.log(reason1[0]);
+             	console.log(reason1[1]);
+             	var afterreason1='<span style="color:#6A0E0E";>'+reason1[0]+'</span> reason'+reason1[1];
+             	var str1=afterreason1.split('\"kubernetes\"');
+str1=str1[0]+'<span style="color:blue;font-weight: bold;">"kubernetes"</span>'+'<span style="color: #6A0E0E;">'+str1[1]+'</span>';
+              anova =anova + str1 + " <br/> <br/>";
+             }
+             var anova = anova.replace(/reason:/g,'<span style="color:blue; font-weight:bold;">reason:</span>');
+     		document.getElementById("mydiv").innerHTML=anova;
+
+         }
+     });
+		}
+
+	
+
+
+
+	</script>
+		
+	</body>
+</html>
